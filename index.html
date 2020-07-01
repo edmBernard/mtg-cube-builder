@@ -30,7 +30,7 @@ function getFrenchData(foreignNames) {
 function CreateCard(name, url) {
     return {
         view: function (vnode) {
-            return m("img", {src:url}, name);
+            return m("img.pure-img", {src:url}, name);
         }
     }
 };
@@ -40,7 +40,7 @@ var Client = {
     oninit: function(vnode) {
         console.log("debug_oninit");
         var requestLength = 0;
-        var pageLength = 50;
+        var pageLength = 5;
         var pageIndex = 0
 
         m.request({
@@ -64,20 +64,10 @@ var Client = {
     },
     view: function(vnode) {
         return m("main", {class: "main"}, [
-            m("h1", {class: "small-margin-bottom"}, "Raspberry Pi LED Controller"),
-            m("div", {class: "pure-g button-container"},
-                m("div", {class: "pure-u-1 pure-button-group", role: "group"}, [
-                    m("button", {class: "pure-button button-small", onclick: function() {turn_rainbow();sensehat_update_all()}}, "Rainbow"),
-                    m("button", {class: "pure-button button-small", onclick: function() {turn_invader1();sensehat_update_all()}}, "Invader 1"),
-                    m("button", {class: "pure-button button-small", onclick: function() {turn_invader2();sensehat_update_all()}}, "Invader 2"),
-                    m("button", {class: "pure-button button-small", onclick: function() {turn_question();sensehat_update_all()}}, "Question"),
-                    m("button", {class: "pure-button button-small", onclick: function() {turn_smiley();sensehat_update_all()}}, "Smiley"),
-                    m("button", {class: "pure-button button-small", onclick: function() {turn_arrow();sensehat_update_all()}}, ["Arrow ", m("i.far fa-trash-alt")])
-                ])
-            ),
-            m("ul#card-list", [
+            m("h1", {class: "small-margin-bottom"}, "Mtg Cube Builder"),
+            m(".pure-g#card-list", [
                 g_data.map(function(card) {
-                    return m("li", CreateCard(card.name, card.imageUrl))
+                    return m(".pure-u-1-12", m(CreateCard(card.name, card.imageUrl)))
                 })
             ]),
         ])
