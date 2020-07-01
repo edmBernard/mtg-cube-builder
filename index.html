@@ -17,6 +17,7 @@ var root = document.body
 var endpoint = "https://api.magicthegathering.io/v1/cards";
 var setCode = "DOM";
 var g_data = [];
+var g_selected = [];
 
 function getFrenchData(foreignNames) {
     let numLanguage = foreignNames.length
@@ -31,6 +32,14 @@ function CreateCard(name, url) {
     return {
         view: function (vnode) {
             return m("img.pure-img", {src:url}, name);
+        }
+    }
+};
+
+function CreateListElement(name, url) {
+    return {
+        view: function (vnode) {
+            return m(".", name);
         }
     }
 };
@@ -65,11 +74,22 @@ var Client = {
     view: function(vnode) {
         return m("main", {class: "main"}, [
             m("h1", {class: "small-margin-bottom"}, "Mtg Cube Builder"),
-            m(".pure-g#card-list", [
-                g_data.map(function(card) {
-                    return m(".pure-u-1-12", m(CreateCard(card.name, card.imageUrl)))
-                })
-            ]),
+            m(".pure-g", [
+                m(".pure-u-1-2",
+                    m(".pure-g#card-list", [
+                        g_data.map(function(card) {
+                            return m(".pure-u-1-6", m(CreateCard(card.name, card.imageUrl)))
+                        })
+                    ])
+                ),
+                m(".pure-u-1-2",
+                    m("ul#selected-list", [
+                        g_data.map(function(card) {
+                            return m("li", m(CreateListElement(card.name, card.imageUrl)))
+                        })
+                    ])
+                )
+            ])
         ])
     }
 }
