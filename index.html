@@ -31,7 +31,8 @@ function getFrenchData(foreignNames) {
 function CreateCard(name, url) {
     return {
         view: function (vnode) {
-            return m("img.pure-img", {src:url, onclick: function(e) {e.redraw = false;g_selected.push(name)}}, name);
+            // with no cache in browser image is redraw on each click (so deactive no-cache option)
+            return m("img.pure-img", {src:url, onclick: function(e) {g_selected.push(name)}}, name);
         }
     }
 };
