@@ -31,12 +31,12 @@ function getFrenchData(foreignNames) {
 function CreateCard(name, url) {
     return {
         view: function (vnode) {
-            return m("img.pure-img", {src:url}, name);
+            return m("img.pure-img", {src:url, onclick: function(e) {e.redraw = false;g_selected.push(name)}}, name);
         }
     }
 };
 
-function CreateListElement(name, url) {
+function CreateListElement(name) {
     return {
         view: function (vnode) {
             return m(".", name);
@@ -84,8 +84,8 @@ var Client = {
                 ),
                 m(".pure-u-1-2",
                     m("ul#selected-list", [
-                        g_data.map(function(card) {
-                            return m("li", m(CreateListElement(card.name, card.imageUrl)))
+                        g_selected.map(function(cardname) {
+                            return m("li", m(CreateListElement(cardname)))
                         })
                     ])
                 )
