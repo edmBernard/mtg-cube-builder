@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<base href="/">
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Mtg Cube Builder</title>
+    <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.3/build/pure-min.css" integrity="sha384-cg6SkqEOCV1NbJoCu11+bm0NvBRc8IYLRGXkmNrqUBfTjmMYwNKPWBTIKyw9mHNJ" crossorigin="anonymous">
+</head>
+<body>
+    <script src="https://unpkg.com/mithril/mithril.js"></script>
+    <script>
+
+var root = document.body
+
+var endpoint = "https://api.magicthegathering.io/v1/cards";
+var setCode = "DOM";
+var g_data = [];
+
+function getFrenchData(foreignNames) {
+    let numLanguage = foreignNames.length
+    for (let j = 0; j < numLanguage; j++) {
+        if (foreignNames[j].language == "French") {
+            return [foreignNames[j].name, foreignNames[j].imageUrl];
+        }
+    }
+}
+
+function CreateCard(name, url) {
+    return {
+        view: function (vnode) {
+            return m("img", {src:url}, name);
+        }
+    }
+};
+
+// "https://api.magicthegathering.io/v1/cards?set=DOM&page=1&pageSize=5&orderBy=number
+var Client = {
+    oninit: function(vnode) {
+        console.log("debug_oninit");
+        var requestLength = 0;
+        var pageLength = 50;
+        var pageIndex = 0
+
+        m.request({
+            method: "GET",
+            url: endpoint + "?set=" + setCode + "&page=" + pageIndex +"&pageSize=" + pageLength + "&orderBy=number",
+        })
+        .then(function(data) {
+
+            console.log(data);
+            requestLength = data.cards.length;
+            for (let i = 0; i < requestLength; i++) {
+                let foreignNames = data.cards[i].foreignNames;
+                let numLanguage = foreignNames.length
+                let [name, imageUrl] = getFrenchData(foreignNames);
+                g_data.push({"name": name, "imageUrl": imageUrl});
+            }
+            pageIndex++;
+        })
+
+        console.log("debug");
+    },
+    view: function(vnode) {
+        return m("main", {class: "main"}, [
+            m("h1", {class: "small-margin-bottom"}, "Raspberry Pi LED Controller"),
+            m("div", {class: "pure-g button-container"},
+                m("div", {class: "pure-u-1 pure-button-group", role: "group"}, [
+                    m("button", {class: "pure-button button-small", onclick: function() {turn_rainbow();sensehat_update_all()}}, "Rainbow"),
+                    m("button", {class: "pure-button button-small", onclick: function() {turn_invader1();sensehat_update_all()}}, "Invader 1"),
+                    m("button", {class: "pure-button button-small", onclick: function() {turn_invader2();sensehat_update_all()}}, "Invader 2"),
+                    m("button", {class: "pure-button button-small", onclick: function() {turn_question();sensehat_update_all()}}, "Question"),
+                    m("button", {class: "pure-button button-small", onclick: function() {turn_smiley();sensehat_update_all()}}, "Smiley"),
+                    m("button", {class: "pure-button button-small", onclick: function() {turn_arrow();sensehat_update_all()}}, ["Arrow ", m("i.far fa-trash-alt")])
+                ])
+            ),
+            m("ul#card-list", [
+                g_data.map(function(card) {
+                    return m("li", CreateCard(card.name, card.imageUrl))
+                })
+            ]),
+        ])
+    }
+}
+
+m.mount(root, Client)
+
+    </script>
+</body>
+</html>
