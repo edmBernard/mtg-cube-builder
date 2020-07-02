@@ -16,7 +16,9 @@
     display: inline-block;
     padding: 5px 10px;
 }
-
+.list-element-mana {
+    vertical-align: middle;
+}
     </style>
 
 
@@ -32,6 +34,11 @@ var endpoint = "https://api.magicthegathering.io/v1/cards";
 var setCode = "DOM";
 var g_data = [];
 var g_selected = {};
+var g_pageLength = 10;
+
+var mutex = false;
+
+function getSymbolImage(name) { return "http://gatherer.wizards.com/Handlers/Image.ashx?size=medium&name="+name+"&type=symbol"; }
 
 function getFrenchData(foreignNames) {
     let numLanguage = foreignNames.length
@@ -41,6 +48,26 @@ function getFrenchData(foreignNames) {
         }
     }
 }
+
+function CreateManaCost(manaCost) {
+    let r = /{(.+?)}/g;
+    let match;
+    let symbolList = [];
+    while ((match = r.exec(manaCost)) != null) {
+        symbolList.push(match[1]);
+    }
+
+    return {
+        view: function (vnode) {
+            // with no cache in browser image is redraw on each click (so deactive no-cache option)
+            return m(".list-element-mana", [
+                        symbolList.map(function(symbolName) {
+                            return m("img.mana-symbol", {src:getSymbolImage(symbolName)}, symbolName);
+                        })
+                    ]);
+        }
+    }
+};
 
 function CreateCard(name, url, number) {
     return {
@@ -57,7 +84,7 @@ function CreateListElement(name, element) {
             return m(".selected-element", [
                 m(".list-element-quantity", {onclick: function() {g_selected[name].quantity += 1}}, element.quantity),
                 m(".list-element-name", {onclick: function() {g_selected[name].quantity -= 1}}, name),
-                m(".list-element-manaCost", element.manaCost)
+                m(CreateManaCost(element.manaCost))
             ]);
         }
     }
@@ -67,12 +94,10 @@ function CreateListElement(name, element) {
 var Client = {
     oninit: function(vnode) {
         var requestLength = 0;
-        var pageLength = 5;
-        var pageIndex = 0
         if (!("cardList" in localStorage)) {
             m.request({
                 method: "GET",
-                url: endpoint + "?set=" + setCode + "&page=" + pageIndex +"&pageSize=" + pageLength + "&orderBy=number",
+                url: endpoint + "?set=" + setCode + "&page=0&pageSize=" + g_pageLength + "&orderBy=number",
             })
             .then(function(data) {
 
@@ -81,15 +106,17 @@ var Client = {
                     let card = data.cards[i];
                     let [name, imageUrl] = getFrenchData(card.foreignNames);
                     g_data.push({"name": name, "imageUrl": imageUrl, "number": card.number});
-                    g_selected[name] = {"quantity":0, "manaCost": card.manaCost};
+                    g_selected[name] = {"quantity": 0, "manaCost": card.manaCost};
                 }
-                pageIndex++;
-
                 localStorage.setItem("cardList", JSON.stringify(g_data));
+                localStorage.setItem("selectedList", JSON.stringify(g_selected));
+                mutex = true;
             })
         } else {
             console.log("Get data from localStorage");
             g_data = JSON.parse(localStorage.getItem("cardList"));
+            g_selected = JSON.parse(localStorage.getItem("selectedList"));
+            mutex = true;
         }
 
     },
@@ -117,6 +144,40 @@ var Client = {
 }
 
 m.mount(root, Client)
+
+function populate() {
+
+    let windowRelativeBottom = document.documentElement.getBoundingClientRect().bottom;
+    if (windowRelativeBottom < document.documentElement.clientHeight + 100) {
+        if (mutex == false) {
+            return;
+        }
+        mutex = false;
+
+        // Calculate pageIndex
+        let pageIndex = Math.trunc(g_data.length / g_pageLength) + 1
+        console.log("pageIndex :", pageIndex);
+
+        m.request({
+            method: "GET",
+            url: endpoint + "?set=" + setCode + "&page=" + pageIndex +"&pageSize=" + g_pageLength + "&orderBy=number",
+        })
+        .then(function(data) {
+            requestLength = data.cards.length;
+            for (let i = 0; i < requestLength; i++) {
+                let card = data.cards[i];
+                let [name, imageUrl] = getFrenchData(card.foreignNames);
+                g_data.push({"name": name, "imageUrl": imageUrl, "number": card.number});
+                g_selected[name] = {"quantity": 0, "manaCost": card.manaCost};
+            }
+            localStorage.setItem("cardList", JSON.stringify(g_data));
+            localStorage.setItem("selectedList", JSON.stringify(g_selected));
+            mutex = true;
+        })
+    }
+}
+
+window.addEventListener('scroll', populate);
 
     </script>
 </body>
