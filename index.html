@@ -17,7 +17,7 @@ var root = document.body
 var endpoint = "https://api.magicthegathering.io/v1/cards";
 var setCode = "DOM";
 var g_data = [];
-var g_selected = [];
+var g_selected = {};
 
 function getFrenchData(foreignNames) {
     let numLanguage = foreignNames.length
@@ -28,19 +28,22 @@ function getFrenchData(foreignNames) {
     }
 }
 
-function CreateCard(name, url) {
+function CreateCard(name, url, number) {
     return {
         view: function (vnode) {
             // with no cache in browser image is redraw on each click (so deactive no-cache option)
-            return m("img.pure-img", {src:url, onclick: function(e) {g_selected.push(name)}}, name);
+            return m("img.pure-img", {src:url, onclick: function() {g_selected[name] += 1}}, name);
         }
     }
 };
 
-function CreateListElement(name) {
+function CreateListElement(name, quantity) {
     return {
         view: function (vnode) {
-            return m(".", name);
+            return m(".", [
+                m(".list-element-quantity", {onclick: function() {g_selected[name] += 1}}, quantity),
+                m(".list-element-name", {onclick: function() {g_selected[name] -= 1}}, name)
+            ]);
         }
     }
 };
@@ -65,7 +68,8 @@ var Client = {
                 let foreignNames = data.cards[i].foreignNames;
                 let numLanguage = foreignNames.length
                 let [name, imageUrl] = getFrenchData(foreignNames);
-                g_data.push({"name": name, "imageUrl": imageUrl});
+                g_data.push({"name": name, "imageUrl": imageUrl, "number": data.cards[i].name});
+                g_selected[name] = 0;
             }
             pageIndex++;
         })
@@ -85,8 +89,8 @@ var Client = {
                 ),
                 m(".pure-u-1-2",
                     m("ul#selected-list", [
-                        g_selected.map(function(cardname) {
-                            return m("li", m(CreateListElement(cardname)))
+                    Object.keys(g_selected).map(function(key, index) {
+                            return g_selected[key] > 0 ? m("li", m(CreateListElement(key, g_selected[key]))) : null;
                         })
                     ])
                 )
