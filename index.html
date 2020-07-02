@@ -7,6 +7,19 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Mtg Cube Builder</title>
     <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.3/build/pure-min.css" integrity="sha384-cg6SkqEOCV1NbJoCu11+bm0NvBRc8IYLRGXkmNrqUBfTjmMYwNKPWBTIKyw9mHNJ" crossorigin="anonymous">
+    <style>
+.selected-list li {
+    list-style-type: none;
+}
+.selected-element div {
+    list-style-type: none;
+    display: inline-block;
+    padding: 5px 10px;
+}
+
+    </style>
+
+
 </head>
 <body>
     <script src="https://unpkg.com/mithril/mithril.js"></script>
@@ -40,7 +53,7 @@ function CreateCard(name, url, number) {
 function CreateListElement(name, element) {
     return {
         view: function (vnode) {
-            return m(".", [
+            return m(".selected-element", [
                 m(".list-element-quantity", {onclick: function() {g_selected[name].quantity += 1}}, element.quantity),
                 m(".list-element-name", {onclick: function() {g_selected[name].quantity -= 1}}, name),
                 m(".list-element-manaCost", element.manaCost)
@@ -85,7 +98,7 @@ var Client = {
                     ])
                 ),
                 m(".pure-u-1-2",
-                    m("ul#selected-list", [
+                    m("ul.selected-list", [
                     Object.keys(g_selected).map(function(key, index) {
                             return g_selected[key].quantity > 0 ? m("li", m(CreateListElement(key, g_selected[key]))) : null;
                         })
