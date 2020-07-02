@@ -32,17 +32,18 @@ function CreateCard(name, url, number) {
     return {
         view: function (vnode) {
             // with no cache in browser image is redraw on each click (so deactive no-cache option)
-            return m("img.pure-img", {src:url, onclick: function() {g_selected[name] += 1}}, name);
+            return m("img.pure-img", {src:url, onclick: function() {g_selected[name].quantity += 1}}, name);
         }
     }
 };
 
-function CreateListElement(name, quantity) {
+function CreateListElement(name, element) {
     return {
         view: function (vnode) {
             return m(".", [
-                m(".list-element-quantity", {onclick: function() {g_selected[name] += 1}}, quantity),
-                m(".list-element-name", {onclick: function() {g_selected[name] -= 1}}, name)
+                m(".list-element-quantity", {onclick: function() {g_selected[name].quantity += 1}}, element.quantity),
+                m(".list-element-name", {onclick: function() {g_selected[name].quantity -= 1}}, name),
+                m(".list-element-manaCost", element.manaCost)
             ]);
         }
     }
@@ -51,7 +52,6 @@ function CreateListElement(name, quantity) {
 // "https://api.magicthegathering.io/v1/cards?set=DOM&page=1&pageSize=5&orderBy=number
 var Client = {
     oninit: function(vnode) {
-        console.log("debug_oninit");
         var requestLength = 0;
         var pageLength = 5;
         var pageIndex = 0
@@ -62,19 +62,16 @@ var Client = {
         })
         .then(function(data) {
 
-            console.log(data);
             requestLength = data.cards.length;
             for (let i = 0; i < requestLength; i++) {
-                let foreignNames = data.cards[i].foreignNames;
-                let numLanguage = foreignNames.length
-                let [name, imageUrl] = getFrenchData(foreignNames);
-                g_data.push({"name": name, "imageUrl": imageUrl, "number": data.cards[i].name});
-                g_selected[name] = 0;
+                let card = data.cards[i];
+                let [name, imageUrl] = getFrenchData(card.foreignNames);
+                g_data.push({"name": name, "imageUrl": imageUrl, "number": card.number});
+                g_selected[name] = {"quantity":0, "manaCost": card.manaCost};
             }
             pageIndex++;
         })
 
-        console.log("debug");
     },
     view: function(vnode) {
         return m("main", {class: "main"}, [
@@ -90,7 +87,7 @@ var Client = {
                 m(".pure-u-1-2",
                     m("ul#selected-list", [
                     Object.keys(g_selected).map(function(key, index) {
-                            return g_selected[key] > 0 ? m("li", m(CreateListElement(key, g_selected[key]))) : null;
+                            return g_selected[key].quantity > 0 ? m("li", m(CreateListElement(key, g_selected[key]))) : null;
                         })
                     ])
                 )
