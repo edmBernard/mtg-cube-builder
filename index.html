@@ -8,37 +8,21 @@
 	<title>Mtg Cube Builder</title>
     <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.3/build/pure-min.css" integrity="sha384-cg6SkqEOCV1NbJoCu11+bm0NvBRc8IYLRGXkmNrqUBfTjmMYwNKPWBTIKyw9mHNJ" crossorigin="anonymous">
     <style>
-.selected-list li {
-    list-style-type: none;
+.card-container {
+    position: relative;
 }
 
-.selected-element {
-    background-color: rgb(66, 184, 221);
-    border-radius: 10px;
-    margin: 2px;
+.quantity-counter {
+    position: absolute;
+    text-align: left;
+    padding: 2%;
+    min-width: 20%;
+    top: 10%;
+    right: 0%;
+    font-size: large;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: rgb(235, 249, 255);
 }
-
-.list-element-mana {
-    vertical-align: baseline;
-}
-
-.list-element-quantity {
-    background-color: rgb(12, 58, 71);
-    border-radius: inherit;
-    color: rgb(136, 200, 219);
-}
-.mana-symbol {
-    vertical-align: text-top;
-}
-
-.selected-element div {
-    vertical-align: middle;
-    list-style-type: none;
-    display: inline-block;
-    padding: 5px 10px;
-    font-size: x-large;
-}
-
 
 .button-secondary {
     color: white;
@@ -67,12 +51,10 @@ var localStorage = window.localStorage;
 var endpoint = "https://api.magicthegathering.io/v1/cards";
 var setCode = "DOM";
 var g_data = [];
-var g_selected = {};
+var g_hideZeros = false;
 var g_pageLength = 50;
 
 var mutex = false;
-
-function getSymbolImage(name) { return "http://gatherer.wizards.com/Handlers/Image.ashx?size=medium&name="+name+"&type=symbol"; }
 
 function getFrenchData(foreignNames) {
     let numLanguage = foreignNames.length
@@ -84,52 +66,24 @@ function getFrenchData(foreignNames) {
     return [undefined, undefined];
 }
 
-function CreateManaCost(manaCost) {
-    let r = /{(.+?)}/g;
-    let match;
-    let symbolList = [];
-    while ((match = r.exec(manaCost)) != null) {
-        symbolList.push(match[1]);
-    }
-
+function CreateCard(card, index) {
+    console.log(index);
     return {
         view: function (vnode) {
             // with no cache in browser image is redraw on each click (so deactive no-cache option)
-            return m(".list-element-mana", [
-                        symbolList.map(function(symbolName) {
-                            return m("img.mana-symbol", {src:getSymbolImage(symbolName)}, symbolName);
-                        })
-                    ]);
-        }
-    }
-};
-
-function CreateCard(name, url, number) {
-    return {
-        view: function (vnode) {
-            // with no cache in browser image is redraw on each click (so deactive no-cache option)
-            return m("img.pure-img", {src:url, onclick: function() {g_selected[name].quantity += 1}}, name);
-        }
-    }
-};
-
-function CreateListElement(name, element) {
-    return {
-        view: function (vnode) {
-            return m(".selected-element", [
-                m(".list-element-quantity", {onclick: function() {g_selected[name].quantity += 1}}, element.quantity),
-                m(".list-element-name", {onclick: function() {g_selected[name].quantity -= 1}}, name),
-                m(CreateManaCost(element.manaCost))
-            ]);
+            return m(".card-container", [
+                    m(".quantity-counter", {onclick: function() {g_data[index].quantity -= 1}}, g_data[index].quantity),
+                    m("img.pure-img", {src:card.imageUrl, onclick: function() {g_data[index].quantity += 1}}, card.name)
+                ]);
         }
     }
 };
 
 function formatCardList(selectedList) {
     let outputString = ""
-    for (let i in selectedList) {
+    for (let i = 0; i < selectedList.length; i++) {
         if (selectedList[i].quantity > 0) {
-            outputString += selectedList[i].quantity + " " + i + "\n";
+            outputString += selectedList[i].quantity + " " + selectedList[i].name + "\n";
         }
     }
     return outputString;
@@ -176,17 +130,14 @@ var Client = {
                         name = card.name;
                         imageUrl = card.imageUrl;
                     }
-                    g_data.push({"name": name, "imageUrl": imageUrl, "number": card.number});
-                    g_selected[name] = {"quantity": 0, "manaCost": card.manaCost};
+                    g_data.push({"name": name, "imageUrl": imageUrl, "number": card.number, "manaCost": card.manaCost, "quantity": 0});
                 }
                 localStorage.setItem("cardList", JSON.stringify(g_data));
-                localStorage.setItem("selectedList", JSON.stringify(g_selected));
                 mutex = true;
             })
         } else {
             console.log("Get data from localStorage");
             g_data = JSON.parse(localStorage.getItem("cardList"));
-            g_selected = JSON.parse(localStorage.getItem("selectedList"));
             mutex = true;
         }
 
@@ -194,22 +145,16 @@ var Client = {
     view: function(vnode) {
         return m("main", {class: "main"}, [
             m("h1", {class: "small-margin-bottom"}, "Mtg Cube Builder"),
+            m(".button-bar", [
+                m("button.pure-button.button-secondary.button-small", {onclick: function() {download("mtg-cub-list.txt", formatCardList(g_data));}}, "Save"),
+                m("button.pure-button.button-secondary.button-small", {onclick: function() {copyClipboard(formatCardList(g_data));}}, "Copy to Clipboard"),
+                m("button.pure-button.button-secondary.button-small", {class: g_hideZeros == true ? "pure-button-active": null, onclick: function() {g_hideZeros = !g_hideZeros;}}, "Hide")
+            ]),
             m(".pure-g", [
-                m(".pure-u-1-2",
+                m(".pure-u-1",
                     m(".pure-g#card-list", [
-                        g_data.map(function(card) {
-                            return m(".pure-u-1-6", m(CreateCard(card.name, card.imageUrl)))
-                        })
-                    ])
-                ),
-                m(".pure-u-1-2",
-                    m(".button-bar", [
-                        m("button.pure-button.button-secondary.button-small", {onclick: function() {download("mtg-cub-list.txt", formatCardList(g_selected));}}, "Save"),
-                        m("button.pure-button.button-secondary.button-small", {onclick: function() {copyClipboard(formatCardList(g_selected));}}, "Copy to Clipboard")
-                    ]),
-                    m("ul.selected-list", [
-                        Object.keys(g_selected).map(function(key, index) {
-                            return g_selected[key].quantity > 0 ? m("li", m(CreateListElement(key, g_selected[key]))) : null;
+                        g_data.map(function(card, index) {
+                            return !g_hideZeros || card.quantity > 0 ? m(".pure-u-1-12", m(CreateCard(card, index))) : null;
                         })
                     ])
                 )
@@ -244,6 +189,7 @@ function populate() {
             url: endpoint + "?set=" + setCode + "&page=" + pageIndex +"&pageSize=" + g_pageLength + "&orderBy=number",
         })
         .then(function(data) {
+
             requestLength = data.cards.length;
             for (let i = 0; i < requestLength; i++) {
                 let card = data.cards[i];
@@ -253,11 +199,9 @@ function populate() {
                     name = card.name;
                     imageUrl = card.imageUrl;
                 }
-                g_data.push({"name": name, "imageUrl": imageUrl, "number": card.number});
-                g_selected[name] = {"quantity": 0, "manaCost": card.manaCost};
+                g_data.push({"name": name, "imageUrl": imageUrl, "number": card.number, "manaCost": card.manaCost, "quantity": 0});
             }
             localStorage.setItem("cardList", JSON.stringify(g_data));
-            localStorage.setItem("selectedList", JSON.stringify(g_selected));
             mutex = true;
         })
     }
