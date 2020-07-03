@@ -47,6 +47,7 @@ function getFrenchData(foreignNames) {
             return [foreignNames[j].name, foreignNames[j].imageUrl];
         }
     }
+    return [undefined, undefined];
 }
 
 function CreateManaCost(manaCost) {
@@ -90,6 +91,37 @@ function CreateListElement(name, element) {
     }
 };
 
+function formatCardList(selectedList) {
+    let outputString = ""
+    for (let i in selectedList) {
+        if (selectedList[i].quantity > 0) {
+            outputString += selectedList[i].quantity + " " + i + "\n";
+        }
+    }
+    return outputString;
+};
+
+function copyClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        console.log('Async: Copying to clipboard was successful!');
+    }, function(err) {
+        console.error('Async: Could not copy text: ', err);
+    });
+};
+
+function download(filename, text) {
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  element.setAttribute('download', filename);
+
+  element.style.display = 'none';
+  document.body.appendChild(element);
+
+  element.click();
+
+  document.body.removeChild(element);
+}
+
 // "https://api.magicthegathering.io/v1/cards?set=DOM&page=1&pageSize=5&orderBy=number
 var Client = {
     oninit: function(vnode) {
@@ -105,6 +137,11 @@ var Client = {
                 for (let i = 0; i < requestLength; i++) {
                     let card = data.cards[i];
                     let [name, imageUrl] = getFrenchData(card.foreignNames);
+                    if (name == undefined) {
+                        // fallback if translation don't exist
+                        name = card.name;
+                        imageUrl = card.imageUrl;
+                    }
                     g_data.push({"name": name, "imageUrl": imageUrl, "number": card.number});
                     g_selected[name] = {"quantity": 0, "manaCost": card.manaCost};
                 }
@@ -123,6 +160,10 @@ var Client = {
     view: function(vnode) {
         return m("main", {class: "main"}, [
             m("h1", {class: "small-margin-bottom"}, "Mtg Cube Builder"),
+            m(".", [
+                m("button", {onclick: function() {download("mtg-cub-list.txt", formatCardList(g_selected));}}, "Save"),
+                m("button", {onclick: function() {copyClipboard(formatCardList(g_selected));}}, "Copy to Clipboard")
+            ]),
             m(".pure-g", [
                 m(".pure-u-1-2",
                     m(".pure-g#card-list", [
@@ -154,9 +195,15 @@ function populate() {
         }
         mutex = false;
 
+        if (g_data.length % g_pageLength) {
+            console.log("fetch set finished");
+            return;
+        }
+
         // Calculate pageIndex
         let pageIndex = Math.trunc(g_data.length / g_pageLength) + 1
         console.log("pageIndex :", pageIndex);
+
 
         m.request({
             method: "GET",
@@ -167,6 +214,11 @@ function populate() {
             for (let i = 0; i < requestLength; i++) {
                 let card = data.cards[i];
                 let [name, imageUrl] = getFrenchData(card.foreignNames);
+                if (name == undefined) {
+                    // fallback if translation don't exist
+                    name = card.name;
+                    imageUrl = card.imageUrl;
+                }
                 g_data.push({"name": name, "imageUrl": imageUrl, "number": card.number});
                 g_selected[name] = {"quantity": 0, "manaCost": card.manaCost};
             }
