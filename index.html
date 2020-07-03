@@ -80,7 +80,7 @@ function CreateCard(card, index) {
         view: function (vnode) {
             // with no cache in browser image is redraw on each click (so deactive no-cache option)
             return m(".card-container", {class: g_cropped ? "card-cropped" : null},
-                    m(".quantity-counter", {onclick: function() {g_data[index].quantity -= 1}}, g_data[index].quantity),
+                    m(".quantity-counter", {onclick: function() {g_data[index].quantity -= g_data[index].quantity > 0 ? 1 : 0}}, g_data[index].quantity),
                     m("img.pure-img", {src:card.imageUrl, onclick: function() {g_data[index].quantity += 1}}, card.name)
                 );
         }
