@@ -11,13 +11,47 @@
 .selected-list li {
     list-style-type: none;
 }
+
+.selected-element {
+    background-color: rgb(66, 184, 221);
+    border-radius: 10px;
+    margin: 2px;
+}
+
+.list-element-mana {
+    vertical-align: baseline;
+}
+
+.list-element-quantity {
+    background-color: rgb(12, 58, 71);
+    border-radius: inherit;
+    color: rgb(136, 200, 219);
+}
+.mana-symbol {
+    vertical-align: text-top;
+}
+
 .selected-element div {
+    vertical-align: middle;
     list-style-type: none;
     display: inline-block;
     padding: 5px 10px;
+    font-size: x-large;
 }
-.list-element-mana {
-    vertical-align: middle;
+
+
+.button-secondary {
+    color: white;
+    border-radius: 4px;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+    background: rgb(66, 184, 221);
+    margin: 10px;
+}
+.button-small {
+    font-size: 85%;
+}
+.button-bar {
+    text-align: center;
 }
     </style>
 
@@ -160,10 +194,6 @@ var Client = {
     view: function(vnode) {
         return m("main", {class: "main"}, [
             m("h1", {class: "small-margin-bottom"}, "Mtg Cube Builder"),
-            m(".", [
-                m("button", {onclick: function() {download("mtg-cub-list.txt", formatCardList(g_selected));}}, "Save"),
-                m("button", {onclick: function() {copyClipboard(formatCardList(g_selected));}}, "Copy to Clipboard")
-            ]),
             m(".pure-g", [
                 m(".pure-u-1-2",
                     m(".pure-g#card-list", [
@@ -173,8 +203,12 @@ var Client = {
                     ])
                 ),
                 m(".pure-u-1-2",
+                    m(".button-bar", [
+                        m("button.pure-button.button-secondary.button-small", {onclick: function() {download("mtg-cub-list.txt", formatCardList(g_selected));}}, "Save"),
+                        m("button.pure-button.button-secondary.button-small", {onclick: function() {copyClipboard(formatCardList(g_selected));}}, "Copy to Clipboard")
+                    ]),
                     m("ul.selected-list", [
-                    Object.keys(g_selected).map(function(key, index) {
+                        Object.keys(g_selected).map(function(key, index) {
                             return g_selected[key].quantity > 0 ? m("li", m(CreateListElement(key, g_selected[key]))) : null;
                         })
                     ])
