@@ -12,6 +12,10 @@
     position: relative;
 }
 
+.card-cropped {
+    height: 50px;
+}
+
 .quantity-counter {
     position: absolute;
     text-align: left;
@@ -52,6 +56,7 @@ var endpoint = "https://api.magicthegathering.io/v1/cards";
 var setCode = "DOM";
 var g_data = [];
 var g_hideZeros = false;
+var g_cropped = false;
 var g_pageLength = 50;
 
 var mutex = false;
@@ -67,11 +72,10 @@ function getFrenchData(foreignNames) {
 }
 
 function CreateCard(card, index) {
-    console.log(index);
     return {
         view: function (vnode) {
             // with no cache in browser image is redraw on each click (so deactive no-cache option)
-            return m(".card-container", [
+            return m(".card-container", {class: g_cropped ? "card-cropped" : null}, [
                     m(".quantity-counter", {onclick: function() {g_data[index].quantity -= 1}}, g_data[index].quantity),
                     m("img.pure-img", {src:card.imageUrl, onclick: function() {g_data[index].quantity += 1}}, card.name)
                 ]);
@@ -142,13 +146,18 @@ var Client = {
         }
 
     },
+    onupdate: function(vnode, old) {
+        localStorage.setItem("cardList", JSON.stringify(g_data));
+    },
     view: function(vnode) {
         return m("main", {class: "main"}, [
             m("h1", {class: "small-margin-bottom"}, "Mtg Cube Builder"),
             m(".button-bar", [
                 m("button.pure-button.button-secondary.button-small", {onclick: function() {download("mtg-cub-list.txt", formatCardList(g_data));}}, "Save"),
                 m("button.pure-button.button-secondary.button-small", {onclick: function() {copyClipboard(formatCardList(g_data));}}, "Copy to Clipboard"),
-                m("button.pure-button.button-secondary.button-small", {class: g_hideZeros == true ? "pure-button-active": null, onclick: function() {g_hideZeros = !g_hideZeros;}}, "Hide")
+                m("button.pure-button.button-secondary.button-small", {class: g_hideZeros == true ? "pure-button-active": null, onclick: function() {g_hideZeros = !g_hideZeros;}}, "Hide"),
+                m("button.pure-button.button-secondary.button-small", {class: g_cropped == true ? "pure-button-active": null, onclick: function() {g_cropped = !g_cropped;}}, "Crop"),
+                m("button.pure-button.button-secondary.button-small", {onclick: function() {g_data.map(function(card, index) {g_data[index].quantity=0;})}}, "Reset")
             ]),
             m(".pure-g", [
                 m(".pure-u-1",
