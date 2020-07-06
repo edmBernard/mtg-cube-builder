@@ -9,6 +9,10 @@
     <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.3/build/pure-min.css" integrity="sha384-cg6SkqEOCV1NbJoCu11+bm0NvBRc8IYLRGXkmNrqUBfTjmMYwNKPWBTIKyw9mHNJ" crossorigin="anonymous">
     <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.3/build/grids-responsive-min.css"/>
     <style>
+.main {
+    text-align: center;
+}
+
 .card-container {
     position: relative;
 }
@@ -35,7 +39,7 @@
 
 .button-secondary {
     color: white;
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
     background: rgb(66, 184, 221);
 }
 .button-small {
@@ -43,7 +47,19 @@
 }
 .button-bar {
     text-align: center;
-    display: flex;
+}
+
+.pure-button-active, .pure-button:active {
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.15), inset 0 0 6px rgba(0,0,0,.6);
+}
+
+@media screen and (min-width: 35.5em) {
+    .button-container-left {
+        text-align: right;
+    }
+    .button-container-right {
+        text-align: left;
+    }
 }
     </style>
 
@@ -156,14 +172,18 @@ var Client = {
     view: function(vnode) {
         return m("main", {class: "main"},
             m("h1", {class: "small-margin-bottom"}, "Mtg Cube Builder"),
-            m(".button-bar",
-                m(".pure-button-group.button-container",
-                    m("button.pure-button.button-secondary.button-small", {onclick: function() {download("mtg-cub-list.txt", formatCardList(g_data));}}, "Save"),
-                    m("button.pure-button.button-secondary.button-small", {onclick: function() {copyClipboard(formatCardList(g_data));}}, "Copy to Clipboard")
+            m(".button-bar.pure-g",
+                m(".pure-u-1.pure-u-sm-1-2.button-container-left",
+                    m(".pure-button-group.button-container",
+                        m("button.pure-button.button-secondary.button-small", {onclick: function() {download("mtg-cub-list.txt", formatCardList(g_data));}}, "Save"),
+                        m("button.pure-button.button-secondary.button-small", {onclick: function() {copyClipboard(formatCardList(g_data));}}, "Copy to Clipboard")
+                    ),
                 ),
-                m("button.pure-button.button-secondary.button-small.button-container", {class: g_hideZeros == true ? "pure-button-active": null, onclick: function() {g_hideZeros = !g_hideZeros;}}, "Hide"),
-                m("button.pure-button.button-secondary.button-small.button-container", {class: g_cropped == true ? "pure-button-active": null, onclick: function() {g_cropped = !g_cropped;}}, "Crop"),
-                m("button.pure-button.button-secondary.button-small.button-container", {onclick: function() {g_data.map(function(card, index) {g_data[index].quantity=0;})}}, "Reset")
+                m(".pure-u-1.pure-u-sm-1-2.button-container-right",
+                    m("button.pure-button.button-secondary.button-small.button-container", {class: g_hideZeros == true ? "pure-button-active": null, onclick: function() {g_hideZeros = !g_hideZeros;}}, "Hide"),
+                    m("button.pure-button.button-secondary.button-small.button-container", {class: g_cropped == true ? "pure-button-active": null, onclick: function() {g_cropped = !g_cropped;}}, "Crop"),
+                    m("button.pure-button.button-secondary.button-small.button-container", {onclick: function() {g_data.map(function(card, index) {g_data[index].quantity=0;})}}, "Reset")
+                ),
             ),
             m(".pure-g",
                 m(".pure-u-1",
